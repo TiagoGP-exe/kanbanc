@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+::selection {
+  background-color: rgb(224, 224, 224);
+  color: rgb(87, 82, 107);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.288);
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+  margin: 10px;
+  box-sizing: content-box;
+  border-radius: 1rem;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d0d3d3;
+  border-radius: 1rem;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #ccc;
+}
+
+* {
+  font-family: "Roboto Slab", serif;
+}
+
+p {
+  font-weight: 300;
+}
+
+h3,
+h4,
+h5 {
+  font-weight: 600;
+}
+
+h1,
+h2 {
+  font-weight: 800;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fff;
+
+  min-width: 300px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.animation {
+  transition: all 0.6s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.container-kanban {
+  min-height: calc(100vh - 5rem);
+}
+
+@media screen and (max-width: 1080px) {
+  html {
+    font-size: 93.75%;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  html {
+    font-size: 87.5%;
+  }
+}
