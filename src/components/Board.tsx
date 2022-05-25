@@ -3,7 +3,7 @@ import { Input, Modal } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { useForm } from "react-hook-form";
-import { Blockquote, LetterT, Pencil, Plus } from "tabler-icons-react";
+import { Blockquote, LetterT, Pencil, Plus, Trash } from "tabler-icons-react";
 import * as yup from "yup";
 import { intialData } from "../utils/intialData";
 import Kanban from "./Kanban";
@@ -35,11 +35,16 @@ export interface IOpened {
 
 const Board = () => {
   const [boardData, setBoardData] = useState(intialData);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(0);
   const [opened, setOpened] = useState<IOpened>({ idKanban: "", type: "" });
+  const [deleteModal, setDeleteModal] = useState<IOpened>({
+    idKanban: "",
+    type: "",
+  });
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
     setValue,
     reset,
@@ -48,6 +53,8 @@ const Board = () => {
   });
 
   useEffect(() => {
+    console.log("asd");
+
     const data = localStorage.getItem("kanbanData");
     if (data) {
       const parsedData = JSON.parse(data);
@@ -56,8 +63,8 @@ const Board = () => {
         setBoardData(parsedData);
       }
     }
-    setReady(true);
-  }, []);
+    setReady((e) => e + 1);
+  }, [boardData]);
 
   const onDragEnd = (re: any) => {
     if (!re.destination) return;
@@ -102,7 +109,9 @@ const Board = () => {
       }));
 
       setBoardData(result);
-    } else {
+      localStorage.setItem("kanbanData", JSON.stringify(result));
+    }
+    if (opened.type === "add") {
       newData[findIndex].tasks.push({
         title: data.title,
         description: data.description,
@@ -111,9 +120,18 @@ const Board = () => {
         index: newData[findIndex].tasks.length,
         kanbanIndex: opened.idKanban,
       });
+      localStorage.setItem("kanbanData", JSON.stringify(newData));
     }
 
-    localStorage.setItem("kanbanData", JSON.stringify(newData));
+    if (deleteModal.type === "delete") {
+      const result = newData.map((task) => ({
+        ...task,
+        tasks: task.tasks.filter((item) => item.date !== data.date),
+      }));
+
+      setBoardData(result);
+      localStorage.setItem("kanbanData", JSON.stringify(result));
+    }
 
     reset();
     setOpened({ idKanban: "", type: "" });
@@ -132,16 +150,23 @@ const Board = () => {
     setOpened({ idKanban: kanbanIndex, type: "edit" });
   };
 
+  const FormData = (): IFormInput => ({
+    title: getValues("title"),
+    description: getValues("description"),
+    date: getValues("date"),
+  });
+
   const deleteTask = (id: string, kanbanIndex: string) => {
-    console.log(id);
-    // const findIndex = boardData.findIndex((e) => e.title === opened);
-    // const findTaskIndex = boardData[findIndex].tasks.findIndex(
-    //   (e) => e.id === id
-    // );
-    // const newData = [...boardData];
-    // newData[findIndex].tasks.splice(findTaskIndex, 1);
-    // localStorage.setItem("kanbanData", JSON.stringify(newData));
-    // setBoardData(newData);
+    const findIndex = boardData.findIndex((e) => e.title === kanbanIndex);
+    const findTaskIndex = boardData[findIndex].tasks.findIndex(
+      (e) => e.id === id
+    );
+
+    const task = boardData[findIndex].tasks[findTaskIndex];
+    setValue("title", task.title);
+    setValue("description", task.description);
+    setValue("date", task.date);
+    setDeleteModal({ idKanban: kanbanIndex, type: "delete" });
   };
 
   return (
@@ -209,6 +234,43 @@ const Board = () => {
               </div>
             </button>
           </form>
+        </Modal>
+
+        <Modal
+          opened={!!deleteModal.idKanban}
+          onClose={() => setDeleteModal({ idKanban: "", type: "" })}
+          centered
+          styles={{
+            title: {
+              fontWeight: "bold",
+              fontSize: "1.5rem",
+            },
+            modal: {
+              borderRadius: "0.75rem",
+            },
+          }}
+          title="Excluir Tarefa"
+        >
+          <div className="fkex flex-col gap-3">
+            <p> Você deseja exluir essa tarefa?</p>
+            <button
+              onClick={() =>
+                opened.type === "delete" && setValue("date", new Date())
+              }
+              className="bg-red-500 mt-5 text-white text-sm py-2 px-5 rounded-xl asdasd font-bold hover:bg-transparent hover:text-red-500 border-red-500 border-2 transition-all duration-200 ease-in-out"
+            >
+              <div
+                onClick={() => {
+                  onSubmit(FormData()),
+                    setDeleteModal({ idKanban: "", type: "" });
+                }}
+                className="flex items-center justify-center gap-2"
+              >
+                <Trash size={18} />
+                Excluir Tarefa
+              </div>
+            </button>
+          </div>
         </Modal>
 
         {ready ? (

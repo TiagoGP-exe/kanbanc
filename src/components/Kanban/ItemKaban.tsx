@@ -20,8 +20,8 @@ const ItemKanban: FC<ItemKanbanProps> = (value) => {
           {...provided.dragHandleProps}
           className={` bg-white px-4 rounded-2xl py-4 animation border-2 border-dashed border-transparent`}
         >
-          <div className="flex items-center justify-between mb-2 text-lg">
-            <h4>{value?.title}</h4>
+          <div className="flex items-start justify-between mb-2 text-lg  ">
+            <h4 className="break-words max-w-[85%]">{value?.title}</h4>
             <MenuKanban
               editTask={value && value.editTask}
               deleteTask={value && value.deleteTask}
@@ -29,7 +29,7 @@ const ItemKanban: FC<ItemKanbanProps> = (value) => {
               kanbanIndex={value.kanbanIndex}
             />
           </div>
-          <p className="text-sm text-justify align-middle break-words">
+          <p className="text-sm text-justify align-middle break-words w-11/12">
             {value?.description}
           </p>
           {value?.date && (
