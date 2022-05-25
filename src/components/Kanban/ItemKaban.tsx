@@ -1,88 +1,54 @@
-import { FC, useContext, useRef } from "react";
-import { useDrag, useDrop } from "react-dnd";
-import { BiDotsHorizontalRounded } from "react-icons/bi";
+import { FC } from "react";
+import { Draggable } from "react-beautiful-dnd";
+import { Dots } from "tabler-icons-react";
 import { TasksKanbanProps } from ".";
-import kanbanContext from "../../context/kanbanContext";
+import MenuKanban from "../MenuKanban";
 
-const ItemKanban: FC<TasksKanbanProps> = (value) => {
-  const ref = useRef(null);
-  const { move } = useContext<any>(kanbanContext);
+interface ItemKanbanProps extends TasksKanbanProps {
+  editTask?: (id: string, kanbanIndex: string) => void;
+  deleteTask?: (id: string, kanbanIndex: string) => void;
+}
 
-  const [{ isDragging }, dragRef] = useDrag(
-    () => ({
-      type: "CARD",
-      item: {
-        id: value.id,
-        index: value.index,
-        kanbanIndex: value.kanbanIndex,
-      },
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    }),
-    []
-  );
-
-  const [, dropRef] = useDrop({
-    accept: "CARD",
-    hover(item: any, monitor) {
-      const draggedListIndex = item.kanbanIndex;
-      const targetListIndex = value.kanbanIndex;
-
-      const draggedIndex = item.index;
-      const targetIndex = value.index;
-
-      if (draggedIndex === targetIndex && value.id === item.id) {
-        return;
-      }
-
-      const targetSize = ref.current?.getBoundingClientRect()!;
-      const targetCenter = (targetSize.bottom - targetSize.top) / 2;
-
-      const draggedOffset = monitor.getClientOffset();
-      const draggedTop = draggedOffset?.y - targetSize.top;
-
-      if (draggedIndex < targetIndex! && draggedTop < targetCenter) {
-        return;
-      }
-
-      if (draggedIndex > targetIndex! && draggedTop > targetCenter) {
-        return;
-      }
-
-      move(draggedListIndex, targetListIndex, draggedIndex, targetIndex);
-
-      item.index = targetIndex;
-      item.kanbanIndex = targetListIndex;
-    },
-    drop: () => {},
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
-  dragRef(dropRef(ref));
-
+const ItemKanban: FC<ItemKanbanProps> = (value) => {
+  const date = new Date(value.date);
   return (
-    <div
-      ref={ref}
-      className={`${
-        isDragging && "border-slate-500 bg-transparent"
-      } bg-white px-4 rounded-2xl py-4 animation border-2 border-dashed border-transparent`}
-    >
-      <div className={`${isDragging && "opacity-0"}`}>
-        <div className="flex items-center justify-between mb-2 text-lg">
-          <h4>{value?.title}</h4>
-          <BiDotsHorizontalRounded className="animation hover:opacity-50 cursor-pointer" />
+    <Draggable index={value.index} draggableId={value.id.toString()}>
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={` bg-white px-4 rounded-2xl py-4 animation border-2 border-dashed border-transparent`}
+        >
+          <div className="flex items-center justify-between mb-2 text-lg">
+            <h4>{value?.title}</h4>
+            <MenuKanban
+              editTask={value && value.editTask}
+              deleteTask={value && value.deleteTask}
+              id={value.id}
+              kanbanIndex={value.kanbanIndex}
+            />
+          </div>
+          <p className="text-sm text-justify align-middle">
+            {value?.description}
+          </p>
+          {value?.date && (
+            <p className="opacity-70 mt-5 text-right text-xs">
+              {date.toLocaleDateString("pt-BR", {
+                year: "2-digit",
+                month: "2-digit",
+                day: "2-digit",
+              })}
+              {" • "}
+              {date.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          )}
         </div>
-
-        <p className="text-sm text-justify align-middle">
-          {value?.description}
-        </p>
-
-        <p className="opacity-70 mt-5 text-right text-xs">{value?.date}</p>
-      </div>
-    </div>
+      )}
+    </Draggable>
   );
 };
 

@@ -1,14 +1,17 @@
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { MantineProvider } from "@mantine/core";
 import Board from "../components/Board";
 import Navbar from "../components/Navbar";
 
 const App = () => {
   return (
-    <DndProvider backend={HTML5Backend}>
+    <MantineProvider
+      theme={{ fontFamily: "Roboto Slab" }}
+      withGlobalStyles
+      withNormalizeCSS
+    >
       <Navbar />
       <Board />
-    </DndProvider>
+    </MantineProvider>
   );
 };
 
