@@ -61,6 +61,10 @@ const Board = () => {
         setBoardData(parsedData);
       }
     }
+
+    if (ready === 0) {
+      setReady(1);
+    }
   }, [ready]);
 
   const onDragEnd = (re: any) => {
@@ -282,7 +286,7 @@ const Board = () => {
           </div>
         </Modal>
 
-        {ready ? (
+        {!!ready ? (
           <Droppable
             droppableId="all-collumns"
             direction="horizontal"
