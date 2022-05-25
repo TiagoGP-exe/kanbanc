@@ -53,8 +53,6 @@ const Board = () => {
   });
 
   useEffect(() => {
-    console.log("asd");
-
     const data = localStorage.getItem("kanbanData");
     if (data) {
       const parsedData = JSON.parse(data);
@@ -64,7 +62,7 @@ const Board = () => {
       }
     }
     setReady((e) => e + 1);
-  }, [boardData]);
+  }, []);
 
   const onDragEnd = (re: any) => {
     if (!re.destination) return;
@@ -84,15 +82,12 @@ const Board = () => {
   };
 
   const addTask = async (kanbanIndex: string) => {
-    console.log(kanbanIndex);
     setOpened({ idKanban: kanbanIndex, type: "add" });
   };
 
   const onSubmit = (data: IFormInput) => {
     const newData = [...boardData];
     const findIndex = newData.findIndex((e) => e.title === opened.idKanban);
-
-    console.log(data);
 
     if (opened.type === "edit") {
       const result = newData.map((task) => ({
@@ -171,7 +166,7 @@ const Board = () => {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex w-full justify-center items-start pt-12 container-kanban bg-background">
+      <div className="flex w-full justify-center items-start py-12 container-kanban bg-background">
         <Modal
           opened={!!opened.idKanban}
           onClose={() => {
@@ -281,7 +276,7 @@ const Board = () => {
           >
             {(provided) => (
               <div
-                className="flex flex-wrap gap-5 w-11/12 max-w-screen-xl justify-center items-start"
+                className="flex flex-wrap gap-5 w-11/12 max-w-screen-lg justify-center lg:justify-between items-start"
                 {...provided.droppableProps}
                 ref={provided.innerRef}
               >
