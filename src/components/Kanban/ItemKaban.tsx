@@ -29,7 +29,7 @@ const ItemKanban: FC<ItemKanbanProps> = (value) => {
               kanbanIndex={value.kanbanIndex}
             />
           </div>
-          <p className="text-sm text-justify align-middle">
+          <p className="text-sm text-justify align-middle break-words">
             {value?.description}
           </p>
           {value?.date && (

@@ -17,8 +17,8 @@ export interface KanbanProps {
   title: string;
   tasks: TasksKanbanProps[];
   addTask?: (id: string) => void;
-  editTask?: (id: string) => void;
-  deleteTask?: (id: string) => void;
+  editTask?: (id: string, kanbanIndex: string) => void;
+  deleteTask?: (id: string, kanbanIndex: string) => void;
 }
 
 const Kanban: FC<KanbanProps> = ({

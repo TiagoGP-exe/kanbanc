@@ -15,8 +15,6 @@ const MenuKanban: FC<MenuKanbanProps> = ({
   id,
   kanbanIndex,
 }) => {
-  console.log(editTask);
-
   return (
     <Menu>
       <Menu.Item

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { Blockquote, LetterT, Plus } from "tabler-icons-react";
 import * as yup from "yup";
 import { intialData } from "../utils/intialData";
-import Kanban, { KanbanProps } from "./Kanban";
+import Kanban from "./Kanban";
 
 const createGuidId = () =>
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -28,10 +28,15 @@ interface IFormInput {
   date: Date;
 }
 
+export interface IOpened {
+  idKanban: string;
+  type: string;
+}
+
 const Board = () => {
   const [boardData, setBoardData] = useState(intialData);
   const [ready, setReady] = useState(false);
-  const [opened, setOpened] = useState("");
+  const [opened, setOpened] = useState<IOpened>({ idKanban: "", type: "" });
   const {
     register,
     handleSubmit,
@@ -72,26 +77,46 @@ const Board = () => {
   };
 
   const addTask = async (kanbanIndex: string) => {
-    setOpened(kanbanIndex);
+    console.log(kanbanIndex);
+    setOpened({ idKanban: kanbanIndex, type: "add" });
   };
 
   const onSubmit = (data: IFormInput) => {
     const newData = [...boardData];
-    const findIndex = newData.findIndex((e) => e.title === opened);
+    const findIndex = newData.findIndex((e) => e.title === opened.idKanban);
 
-    newData[findIndex].tasks.push({
-      title: data.title,
-      description: data.description,
-      date: data.date,
-      id: createGuidId(),
-      index: newData[findIndex].tasks.length,
-      kanbanIndex: opened,
-    });
+    console.log(data);
+
+    if (opened.type === "edit") {
+      const result = newData.map((task) => ({
+        ...task,
+        tasks: task.tasks.map((item) => {
+          if (item.date === data.date) {
+            return {
+              ...item,
+              ...data,
+            };
+          }
+          return item;
+        }),
+      }));
+
+      setBoardData(result);
+    } else {
+      newData[findIndex].tasks.push({
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        id: createGuidId(),
+        index: newData[findIndex].tasks.length,
+        kanbanIndex: opened.idKanban,
+      });
+    }
 
     localStorage.setItem("kanbanData", JSON.stringify(newData));
 
     reset();
-    setOpened("");
+    setOpened({ idKanban: "", type: "" });
   };
 
   const editTask = (id: string, kanbanIndex: string) => {
@@ -99,11 +124,12 @@ const Board = () => {
     const findTaskIndex = boardData[findIndex].tasks.findIndex(
       (e) => e.id === id
     );
+
     const task = boardData[findIndex].tasks[findTaskIndex];
     setValue("title", task.title);
     setValue("description", task.description);
     setValue("date", task.date);
-    setOpened(id);
+    setOpened({ idKanban: kanbanIndex, type: "edit" });
   };
 
   const deleteTask = (id: string, kanbanIndex: string) => {
@@ -122,8 +148,10 @@ const Board = () => {
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex w-full justify-center items-start pt-12 container-kanban bg-background">
         <Modal
-          opened={!!opened}
-          onClose={() => setOpened("")}
+          opened={!!opened.idKanban}
+          onClose={() => {
+            setOpened({ idKanban: "", type: "" }), reset();
+          }}
           centered
           title="Adicionar Tarefa"
           styles={{
@@ -166,7 +194,9 @@ const Board = () => {
             )}
 
             <button
-              onClick={() => setValue("date", new Date())}
+              onClick={() =>
+                opened.type === "add" && setValue("date", new Date())
+              }
               className="bg-blue-500 text-white text-sm py-2 px-5 rounded-xl asdasd font-bold hover:bg-transparent hover:text-blue-500 border-blue-500 border-2 transition-all duration-200 ease-in-out"
             >
               <div className="flex items-center justify-center gap-2">
