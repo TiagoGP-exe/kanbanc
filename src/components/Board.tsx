@@ -3,7 +3,7 @@ import { Input, Modal } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { useForm } from "react-hook-form";
-import { Blockquote, LetterT, Plus } from "tabler-icons-react";
+import { Blockquote, LetterT, Pencil, Plus } from "tabler-icons-react";
 import * as yup from "yup";
 import { intialData } from "../utils/intialData";
 import Kanban from "./Kanban";
@@ -153,7 +153,7 @@ const Board = () => {
             setOpened({ idKanban: "", type: "" }), reset();
           }}
           centered
-          title="Adicionar Tarefa"
+          title={opened.type === "add" ? "Adicionar Tarefa" : "Editar Tarefa"}
           styles={{
             title: {
               fontWeight: "bold",
@@ -200,8 +200,12 @@ const Board = () => {
               className="bg-blue-500 text-white text-sm py-2 px-5 rounded-xl asdasd font-bold hover:bg-transparent hover:text-blue-500 border-blue-500 border-2 transition-all duration-200 ease-in-out"
             >
               <div className="flex items-center justify-center gap-2">
-                <Plus size={18} />
-                Adicionar atividade
+                {opened.type === "add" ? (
+                  <Plus size={18} />
+                ) : (
+                  <Pencil size={18} />
+                )}
+                {opened.type === "add" ? "Adicionar Tarefa" : "Editar Tarefa"}
               </div>
             </button>
           </form>
