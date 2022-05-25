@@ -61,8 +61,7 @@ const Board = () => {
         setBoardData(parsedData);
       }
     }
-    setReady((e) => e + 1);
-  }, []);
+  }, [ready]);
 
   const onDragEnd = (re: any) => {
     if (!re.destination) return;
@@ -86,11 +85,10 @@ const Board = () => {
   };
 
   const onSubmit = (data: IFormInput) => {
-    const newData = [...boardData];
-    const findIndex = newData.findIndex((e) => e.title === opened.idKanban);
+    const findIndex = boardData.findIndex((e) => e.title === opened.idKanban);
 
     if (opened.type === "edit") {
-      const result = newData.map((task) => ({
+      const result = boardData.map((task) => ({
         ...task,
         tasks: task.tasks.map((item) => {
           if (item.date === data.date) {
@@ -105,21 +103,37 @@ const Board = () => {
 
       setBoardData(result);
       localStorage.setItem("kanbanData", JSON.stringify(result));
+      setReady((e) => e + 1);
     }
     if (opened.type === "add") {
-      newData[findIndex].tasks.push({
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        id: createGuidId(),
-        index: newData[findIndex].tasks.length,
-        kanbanIndex: opened.idKanban,
+      const result = boardData.map((task, index) => {
+        if (index === findIndex) {
+          return {
+            ...task,
+            tasks: [
+              ...task.tasks,
+              {
+                title: data.title,
+                description: data.description,
+                date: data.date,
+                id: createGuidId(),
+                index: boardData[findIndex].tasks.length + 1,
+                kanbanIndex: opened.idKanban,
+              },
+            ],
+          };
+        }
+        return task;
       });
-      localStorage.setItem("kanbanData", JSON.stringify(newData));
+
+      setBoardData(result);
+      localStorage.setItem("kanbanData", JSON.stringify(result));
+
+      setReady((e) => e + 1);
     }
 
     if (deleteModal.type === "delete") {
-      const result = newData.map((task) => ({
+      const result = boardData.map((task) => ({
         ...task,
         tasks: task.tasks.filter((item) => item.date !== data.date),
       }));
