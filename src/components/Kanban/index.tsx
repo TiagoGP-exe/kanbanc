@@ -44,7 +44,7 @@ const Kanban: FC<KanbanProps> = ({
       <Droppable droppableId={title} type="task">
         {(provided, snapshot) => (
           <div
-            className={`flex flex-col p-2 gap-4 transition-colors duration-200 rounded-2xl ${
+            className={`flex flex-col p-1 gap-4 transition-colors duration-200 rounded-2xl ${
               snapshot.isDraggingOver && "bg-slate-300  "
             }`}
             ref={provided.innerRef}

@@ -3,10 +3,10 @@ import { Input, Modal } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { useForm } from "react-hook-form";
-import { Blockquote, LetterT, Plus } from "tabler-icons-react";
+import { Blockquote, LetterT, Pencil, Plus, Trash } from "tabler-icons-react";
 import * as yup from "yup";
 import { intialData } from "../utils/intialData";
-import Kanban, { KanbanProps } from "./Kanban";
+import Kanban from "./Kanban";
 
 const createGuidId = () =>
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -28,13 +28,23 @@ interface IFormInput {
   date: Date;
 }
 
+export interface IOpened {
+  idKanban: string;
+  type: string;
+}
+
 const Board = () => {
   const [boardData, setBoardData] = useState(intialData);
-  const [ready, setReady] = useState(false);
-  const [opened, setOpened] = useState("");
+  const [ready, setReady] = useState(0);
+  const [opened, setOpened] = useState<IOpened>({ idKanban: "", type: "" });
+  const [deleteModal, setDeleteModal] = useState<IOpened>({
+    idKanban: "",
+    type: "",
+  });
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
     setValue,
     reset,
@@ -51,8 +61,11 @@ const Board = () => {
         setBoardData(parsedData);
       }
     }
-    setReady(true);
-  }, []);
+
+    if (ready === 0) {
+      setReady(1);
+    }
+  }, [ready]);
 
   const onDragEnd = (re: any) => {
     if (!re.destination) return;
@@ -72,26 +85,69 @@ const Board = () => {
   };
 
   const addTask = async (kanbanIndex: string) => {
-    setOpened(kanbanIndex);
+    setOpened({ idKanban: kanbanIndex, type: "add" });
   };
 
   const onSubmit = (data: IFormInput) => {
-    const newData = [...boardData];
-    const findIndex = newData.findIndex((e) => e.title === opened);
+    const findIndex = boardData.findIndex((e) => e.title === opened.idKanban);
 
-    newData[findIndex].tasks.push({
-      title: data.title,
-      description: data.description,
-      date: data.date,
-      id: createGuidId(),
-      index: newData[findIndex].tasks.length,
-      kanbanIndex: opened,
-    });
+    if (opened.type === "edit") {
+      const result = boardData.map((task) => ({
+        ...task,
+        tasks: task.tasks.map((item) => {
+          if (item.date === data.date) {
+            return {
+              ...item,
+              ...data,
+            };
+          }
+          return item;
+        }),
+      }));
 
-    localStorage.setItem("kanbanData", JSON.stringify(newData));
+      setBoardData(result);
+      localStorage.setItem("kanbanData", JSON.stringify(result));
+      setReady((e) => e + 1);
+    }
+    if (opened.type === "add") {
+      const result = boardData.map((task, index) => {
+        if (index === findIndex) {
+          return {
+            ...task,
+            tasks: [
+              ...task.tasks,
+              {
+                title: data.title,
+                description: data.description,
+                date: data.date,
+                id: createGuidId(),
+                index: boardData[findIndex].tasks.length + 1,
+                kanbanIndex: opened.idKanban,
+              },
+            ],
+          };
+        }
+        return task;
+      });
+
+      setBoardData(result);
+      localStorage.setItem("kanbanData", JSON.stringify(result));
+
+      setReady((e) => e + 1);
+    }
+
+    if (deleteModal.type === "delete") {
+      const result = boardData.map((task) => ({
+        ...task,
+        tasks: task.tasks.filter((item) => item.date !== data.date),
+      }));
+
+      setBoardData(result);
+      localStorage.setItem("kanbanData", JSON.stringify(result));
+    }
 
     reset();
-    setOpened("");
+    setOpened({ idKanban: "", type: "" });
   };
 
   const editTask = (id: string, kanbanIndex: string) => {
@@ -99,33 +155,43 @@ const Board = () => {
     const findTaskIndex = boardData[findIndex].tasks.findIndex(
       (e) => e.id === id
     );
+
     const task = boardData[findIndex].tasks[findTaskIndex];
     setValue("title", task.title);
     setValue("description", task.description);
     setValue("date", task.date);
-    setOpened(id);
+    setOpened({ idKanban: kanbanIndex, type: "edit" });
   };
 
+  const FormData = (): IFormInput => ({
+    title: getValues("title"),
+    description: getValues("description"),
+    date: getValues("date"),
+  });
+
   const deleteTask = (id: string, kanbanIndex: string) => {
-    console.log(id);
-    // const findIndex = boardData.findIndex((e) => e.title === opened);
-    // const findTaskIndex = boardData[findIndex].tasks.findIndex(
-    //   (e) => e.id === id
-    // );
-    // const newData = [...boardData];
-    // newData[findIndex].tasks.splice(findTaskIndex, 1);
-    // localStorage.setItem("kanbanData", JSON.stringify(newData));
-    // setBoardData(newData);
+    const findIndex = boardData.findIndex((e) => e.title === kanbanIndex);
+    const findTaskIndex = boardData[findIndex].tasks.findIndex(
+      (e) => e.id === id
+    );
+
+    const task = boardData[findIndex].tasks[findTaskIndex];
+    setValue("title", task.title);
+    setValue("description", task.description);
+    setValue("date", task.date);
+    setDeleteModal({ idKanban: kanbanIndex, type: "delete" });
   };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex w-full justify-center items-start pt-12 container-kanban bg-background">
+      <div className="flex w-full justify-center items-start py-12 container-kanban bg-background">
         <Modal
-          opened={!!opened}
-          onClose={() => setOpened("")}
+          opened={!!opened.idKanban}
+          onClose={() => {
+            setOpened({ idKanban: "", type: "" }), reset();
+          }}
           centered
-          title="Adicionar Tarefa"
+          title={opened.type === "add" ? "Adicionar Tarefa" : "Editar Tarefa"}
           styles={{
             title: {
               fontWeight: "bold",
@@ -166,18 +232,61 @@ const Board = () => {
             )}
 
             <button
-              onClick={() => setValue("date", new Date())}
+              onClick={() =>
+                opened.type === "add" && setValue("date", new Date())
+              }
               className="bg-blue-500 text-white text-sm py-2 px-5 rounded-xl asdasd font-bold hover:bg-transparent hover:text-blue-500 border-blue-500 border-2 transition-all duration-200 ease-in-out"
             >
               <div className="flex items-center justify-center gap-2">
-                <Plus size={18} />
-                Adicionar atividade
+                {opened.type === "add" ? (
+                  <Plus size={18} />
+                ) : (
+                  <Pencil size={18} />
+                )}
+                {opened.type === "add" ? "Adicionar Tarefa" : "Editar Tarefa"}
               </div>
             </button>
           </form>
         </Modal>
 
-        {ready ? (
+        <Modal
+          opened={!!deleteModal.idKanban}
+          onClose={() => setDeleteModal({ idKanban: "", type: "" })}
+          centered
+          styles={{
+            title: {
+              fontWeight: "bold",
+              fontSize: "1.5rem",
+            },
+            modal: {
+              borderRadius: "0.75rem",
+            },
+          }}
+          title="Excluir Tarefa"
+        >
+          <div className="fkex flex-col gap-3">
+            <p> Você deseja exluir essa tarefa?</p>
+            <button
+              onClick={() =>
+                opened.type === "delete" && setValue("date", new Date())
+              }
+              className="bg-red-500 mt-5 text-white text-sm py-2 px-5 rounded-xl asdasd font-bold hover:bg-transparent hover:text-red-500 border-red-500 border-2 transition-all duration-200 ease-in-out"
+            >
+              <div
+                onClick={() => {
+                  onSubmit(FormData()),
+                    setDeleteModal({ idKanban: "", type: "" });
+                }}
+                className="flex items-center justify-center gap-2"
+              >
+                <Trash size={18} />
+                Excluir Tarefa
+              </div>
+            </button>
+          </div>
+        </Modal>
+
+        {!!ready ? (
           <Droppable
             droppableId="all-collumns"
             direction="horizontal"
@@ -185,7 +294,7 @@ const Board = () => {
           >
             {(provided) => (
               <div
-                className="flex flex-wrap gap-5 w-11/12 max-w-screen-xl justify-center items-start"
+                className="flex flex-wrap gap-5 w-11/12 max-w-screen-lg justify-center lg:justify-between items-start"
                 {...provided.droppableProps}
                 ref={provided.innerRef}
               >
